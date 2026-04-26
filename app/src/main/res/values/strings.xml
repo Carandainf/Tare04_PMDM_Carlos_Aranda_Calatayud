@@ -4,6 +4,11 @@
     <string name="characters">Personajes</string>
     <string name="collectibles">Coleccionables</string>
     <string name="title_about">Acerca de</string>
-    <string name="text_about">Aplicación desarrollada por \n <b>Lindsay Barrero Martínez.</b></string>
+    <string name="text_about">Aplicación desarrollada por \n <b>Carlos Aranda Calatayud.</b></string>
     <string name="accept">Aceptar</string>
+    <string name="ver_personajes_saga">¡Bienvenido a Spyro! Aquí podrás ver todos los personajes de la saga.</string>
+    <string name="siguiente">Siguiente</string>
+    <string name="omitir_guia">Omitir guía</string>
+    <string name="bienvenido_a_spyro_app">¡Bienvenido a Spyro App!</string>
+    <string name="comenzar">Comenzar</string>
 </resources>
