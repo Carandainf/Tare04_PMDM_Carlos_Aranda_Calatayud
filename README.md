@@ -29,7 +29,7 @@ Esta aplicación es una enciclopedia visual sobre el universo de Spyro. Su prop�
 ## 🚀 Instrucciones de Uso
 1.  Clona este repositorio:
     ```bash
-    git clone [https://github.com/TU_USUARIO/TU_REPOSITORIO.git](https://github.com/TU_USUARIO/TU_REPOSITORIO.git)
+    git clone https://github.com/Carandainf/Tare04_PMDM_Carlos_Aranda_Calatayud.git
     ```
 2.  Abre el proyecto en **Android Studio** (Ladybug o superior).
 3.  Sincroniza el proyecto con los archivos de **Gradle**.
