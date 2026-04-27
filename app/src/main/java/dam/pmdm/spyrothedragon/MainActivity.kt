@@ -1,6 +1,7 @@
 package dam.pmdm.spyrothedragon
 
 import android.animation.ObjectAnimator
+import android.animation.ValueAnimator
 import android.content.Context
 import android.media.SoundPool
 import android.os.Bundle
@@ -8,7 +9,6 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.view.animation.BounceInterpolator
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
@@ -17,6 +17,7 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.NavigationUI
 import dam.pmdm.spyrothedragon.databinding.ActivityMainBinding
 import androidx.core.graphics.toColorInt
+import androidx.core.content.edit
 
 class MainActivity : AppCompatActivity() {
 
@@ -106,30 +107,42 @@ class MainActivity : AppCompatActivity() {
 
         // --- Fin Configuración Audio ---
 
+        // --- Animación de Spyro en la bienvenida ---
+        // Accedemos a través de includeGuide es el ID de mi layout (que es el include en el layout principal)
+        val spyroImg = binding.includeGuide.imgSpyroWelcome
+
+        // Creamos una animación de "flotado" suave (sube y baja)
+        val animator = ObjectAnimator.ofFloat(spyroImg, "translationY", 0f, -40f, 0f)
+        animator.duration = 3000 // 3 segundos por ciclo
+        animator.repeatCount = ValueAnimator.INFINITE // No para nunca
+        animator.repeatMode = ValueAnimator.REVERSE // Hace que el movimiento sea fluido ida y vuelta
+        animator.start()
+
         // --- Compruebo si hay que mostrar la guía al arrancar la app ---
         checkFirstLaunch()
-    }
+    } // Fin del onCreate
 
     /**
-     * Este método comprueba si es la primera vez que se ejecuta la app.
+     * Este método comprueba si es la primera vez que se ejecuta la app y entonces lanza la guía
      */
     private fun checkFirstLaunch() {
-        // Abrimos el archivo de preferencias llamado "SpyroPrefs"
-        // MODE_PRIVATE para que solo lo pueda leer nuestra App
-        val sharedPref = getSharedPreferences("SpyroPrefs", Context.MODE_PRIVATE)
-
-        // Leemos el booleano "isFirstLaunch". Si no existe, por defecto devolvemos true.
+        val sharedPref = getSharedPreferences("SpyroPrefs_V9", Context.MODE_PRIVATE)
         val isFirstLaunch = sharedPref.getBoolean("isFirstLaunch", true)
 
         if (isFirstLaunch) {
-            // SI ES LA PRIMERA VEZ:
             startGuide()
+        }
+    }
 
-            // Ahora marcamos en el archivo de preferencias que ya no es la primera vez
-            val editor = sharedPref.edit()
-            // Recordar que la versión final tengo que descomentar esta opción
-            editor.putBoolean("isFirstLaunch", false)
-            editor.apply() // Esto guarda los cambios de forma asíncrona
+    /**
+     * Registra de forma persistente que el usuario ha completado o finalizado la guía.
+     * Utiliza SharedPreferences para almacenar un valor booleano que evitará que
+     * la guía se muestre automáticamente en futuros inicios de la aplicación.
+     */
+    private fun markGuideAsFinished() {
+        val sharedPref = getSharedPreferences("SpyroPrefs_V9", Context.MODE_PRIVATE)
+        sharedPref.edit {
+            putBoolean("isFirstLaunch", false)
         }
     }
 
@@ -179,6 +192,8 @@ class MainActivity : AppCompatActivity() {
             currentStep++
             updateGuideText()
         } else {
+            // marcamos como finalizada antes de esconderla.
+            markGuideAsFinished()
             hideGuide()
         }
     }
@@ -196,25 +211,36 @@ class MainActivity : AppCompatActivity() {
 
         val bubbleParams = bubble.layoutParams as androidx.constraintlayout.widget.ConstraintLayout.LayoutParams
         val arrowParams = arrow.layoutParams as androidx.constraintlayout.widget.ConstraintLayout.LayoutParams
+
+        // 1. AÑADIMOS EL CONTROLADOR DEL RECUADRO INTERIOR
+        val contentParams = bubbleContent.layoutParams as androidx.constraintlayout.widget.ConstraintLayout.LayoutParams
+
         val density = resources.displayMetrics.density
 
-        // RESET GENERAL DE ESTADO
+        // --- RESET GENERAL DE ESTADO ---
         btnSkip.visibility = View.VISIBLE
         arrow.visibility = View.VISIBLE
+        binding.includeGuide.btnNext.text = getString(R.string.siguiente)
 
-        // Reset flecha: por defecto siempre debajo del contenido
+        // Reset flecha
         arrowParams.topToBottom = bubbleContent.id
         arrowParams.bottomToTop = -1
+        arrowParams.topToTop = -1
+        arrowParams.bottomToBottom = -1
+        arrowParams.topMargin = 0
+        arrowParams.bottomMargin = 0
         arrow.rotation = 0f
 
-        // Reset burbuja: por defecto en la parte inferior (para el menú)
+        // Reset burbuja (Contenedor general)
         bubbleParams.bottomToBottom = androidx.constraintlayout.widget.ConstraintLayout.LayoutParams.PARENT_ID
         bubbleParams.topToTop = -1
         bubbleParams.topMargin = 0
-
-        // Ultimo cálculo de distancia = 45dp espacio para que la flecha se vea sobre el menú
         bubbleParams.bottomMargin = (45 * density).toInt()
 
+        // 2. RESET DEL RECUADRO INTERIOR (Para que en los pasos 1,2,3 y 5 esté normal)
+        contentParams.topMargin = 0
+
+        // --- LÓGICA DE CADA PASO ---
         when (currentStep) {
             1 -> {
                 binding.includeGuide.guideText.text = "Aquí podrás explorar a todos los personajes."
@@ -233,18 +259,25 @@ class MainActivity : AppCompatActivity() {
             }
             4 -> {
                 binding.includeGuide.guideText.text = "Información sobre el autor y la app."
+
+                // Subimos el contenedor general arriba
                 bubbleParams.bottomToBottom = -1
                 bubbleParams.topToTop = androidx.constraintlayout.widget.ConstraintLayout.LayoutParams.PARENT_ID
-
-                // Reducimos a 10dp para que esté bien pegado al icono superior
-                bubbleParams.topMargin = (10 * density).toInt()
+                bubbleParams.topMargin = (65 * density).toInt()
                 bubbleParams.horizontalBias = 0.98f
 
-                // CAMBIO FLECHA A PARTE SUPERIOR
+                // 3. ¡LA MAGIA! Bajamos el recuadro azul 40dp DENTRO de su contenedor
+                // para que quede el hueco perfecto para la flecha arriba.
+                contentParams.topMargin = (40 * density).toInt()
+
+                // 4. Colocamos la flecha exactamente en ese hueco
                 arrow.rotation = 180f
-                arrowParams.horizontalBias = 0.95f // Ajustado un pelo más a la derecha
                 arrowParams.topToBottom = -1
+
                 arrowParams.bottomToTop = bubbleContent.id
+                arrowParams.topToTop = androidx.constraintlayout.widget.ConstraintLayout.LayoutParams.PARENT_ID
+
+                arrowParams.horizontalBias = 0.92f
             }
             5 -> {
                 binding.includeGuide.guideText.text = "¡Resumen final!\n1. Personajes explorados\n2. Mundos visitados\n3. Coleccionables vistos\n4. Ayuda localizada"
@@ -260,8 +293,12 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        bubble.layoutParams = bubbleParams
+        // --- APLICAMOS LOS CAMBIOS Y ANIMAMOS ---
+        bubbleContent.layoutParams = contentParams // Aplicamos el margen al recuadro interior
+        bubble.layoutParams = bubbleParams         // Aplicamos la posición de la burbuja completa
         arrow.layoutParams = arrowParams
+
+        bubble.requestLayout()
         animateBubble(bubble)
         playGuideSound()
     }
