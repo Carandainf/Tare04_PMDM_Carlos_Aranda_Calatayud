@@ -47,4 +47,4 @@ El desarrollo de esta aplicación ha sido un reto técnico significativo que ha 
 **Aprendizaje Personal**: Este proyecto me ha enseñado que los pequeños detalles —como el feedback sonoro tras una acción o que una flecha apunte exactamente al centro de un icono— son los que marcan la diferencia entre una aplicación funcional y una de alta calidad. Ha sido una excelente oportunidad para dominar la arquitectura de adaptadores, el ciclo de vida de los fragmentos y la comunicación avanzada entre componentes de Android.
 
 ---
-Creado por: **[TU NOMBRE AQUÍ]** - 2026
+Creado por: **Carlos Aranda Calatayud** - 2026
